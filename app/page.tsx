@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import React, { useState } from "react";
 import {
   ArrowRight,
@@ -21,7 +21,7 @@ const RoadmapGenerator = () => {
   const [roadmap, setRoadmap] = useState<CareerRoadmap | null>(null);
   const api = "api/generate-roadmap";
   interface RoadmapResponse {
-    data:{message: CareerRoadmap}
+    data: { message: CareerRoadmap };
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -33,7 +33,6 @@ const RoadmapGenerator = () => {
         stack: stack,
       });
       if (resp?.data) {
-        console.log(resp.data.message)
         setRoadmap(resp.data.message);
       }
     } catch (err) {
@@ -97,11 +96,25 @@ const RoadmapGenerator = () => {
         <div className="max-w-4xl mx-auto">
           {/* Overview Section */}
           <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex flex-col items-center gap-2 mb-4">
               <Target className="text-blue-600" />
               <h2 className="text-2xl font-bold text-gray-800">
-                {roadmap.role}-{roadmap.stack.join(", ")}
+                {roadmap.role}
               </h2>
+              <h3 className="text-xl font-bold text-gray-800">
+                Required Stack
+              </h3>
+              <div className="flex flex-wrap gap-2">
+              {Array.isArray(roadmap.stack)
+                ? roadmap.stack.map((tech, index) => (
+                    <span
+                      key={index}
+                      className={`bg-gray-100 px-2 py-1 rounded text-sm`}
+                    >
+                      {tech}
+                    </span>
+                  ))
+                : null}</div>
             </div>
             <p className="text-gray-600 mb-4">{roadmap.overview.description}</p>
             <div className="grid md:grid-cols-2 gap-4">
