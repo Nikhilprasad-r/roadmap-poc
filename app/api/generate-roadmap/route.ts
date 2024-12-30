@@ -1,4 +1,3 @@
-
 import { CareerRoadmapSchema } from "@/app/schemas/roadmap";
 import openAiResponse from "@/app/utils/openAiRespone";
 import { NextRequest, NextResponse } from "next/server";
@@ -39,7 +38,8 @@ export async function POST(request: NextRequest) {
     const response = await openAiResponse(
       systemPrompt,
       userPrompt,
-      CareerRoadmapSchema
+      CareerRoadmapSchema,
+      "roadmap"
     );
     if (!response) {
       return NextResponse.json(

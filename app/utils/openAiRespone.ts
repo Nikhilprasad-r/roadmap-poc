@@ -5,7 +5,8 @@ import { ZodSchema } from "zod";
 const openAiResponse = async (
   systemPrompt: string,
   userPrompt: string,
-  schema: ZodSchema
+  schema: ZodSchema,
+  expectedOutput: string
 ) => {
   const openai = new OpenAI();
   const completion = await openai.beta.chat.completions.parse({
@@ -21,7 +22,7 @@ const openAiResponse = async (
       },
     ],
 
-    response_format: zodResponseFormat(schema,"roadmap"),
+    response_format: zodResponseFormat(schema, expectedOutput),
   });
   return completion.choices[0].message.parsed;
 };
