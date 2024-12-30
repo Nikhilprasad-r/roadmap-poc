@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     const reqBody = await request.json();
     const { role, stack } = reqBody;
 
-    let systemPrompt = `You are a helpful career guidance expert and technical mentor. Your role is to create detailed, practical learning roadmaps for aspiring technology professionals. For each roadmap:
+    const systemPrompt = `You are a helpful career guidance expert and technical mentor. Your role is to create detailed, practical learning roadmaps for aspiring technology professionals. For each roadmap:
 
     1. Analyze the target role and required technology stack
     2. Break down the learning path into clear phases (Beginner, Intermediate, Advanced)
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     
     Keep recommendations practical, current, and focused on industry-standard practices.`;
 
-    let userPrompt = `Create a detailed career roadmap for someone aspiring to become a ${role} specializing in ${stack}. 
+    const userPrompt = `Create a detailed career roadmap for someone aspiring to become a ${role} specializing in ${stack}. 
     
     Please include:
     - Prerequisites and fundamental concepts to master

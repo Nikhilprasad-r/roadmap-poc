@@ -1,10 +1,11 @@
 import OpenAI from "openai";
 import { zodResponseFormat } from "openai/helpers/zod";
+import { ZodSchema } from "zod";
 
 const openAiResponse = async (
   systemPrompt: string,
   userPrompt: string,
-  schema: any
+  schema: ZodSchema
 ) => {
   const openai = new OpenAI();
   const completion = await openai.beta.chat.completions.parse({

@@ -8,7 +8,6 @@ import {
   Award,
   Target,
   AlertCircle,
-  Briefcase,
   Clock,
 } from "lucide-react";
 import axios from "axios";
