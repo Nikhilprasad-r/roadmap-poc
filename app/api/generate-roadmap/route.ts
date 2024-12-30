@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
   try {
     const reqBody = await request.json();
     const { role, stack } = reqBody;
-
+console.log("disabled")
     const systemPrompt = `You are a helpful career guidance expert and technical mentor. Your role is to create detailed, practical learning roadmaps for aspiring technology professionals. For each roadmap:
 
     1. Analyze the target role and required technology stack
