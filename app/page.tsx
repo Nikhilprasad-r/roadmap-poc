@@ -18,7 +18,7 @@ const RoadmapGenerator = () => {
   const [stack, setStack] = useState("");
   const [loading, setLoading] = useState(false);
   const [roadmap, setRoadmap] = useState<CareerRoadmap | null>(null);
-  const api = "api/generate-roadmap";
+  const api = process.env.BACKEND_URL || "api/generate-roadmap";
   interface RoadmapResponse {
     data: { message: CareerRoadmap };
   }
@@ -104,16 +104,17 @@ const RoadmapGenerator = () => {
                 Required Stack
               </h3>
               <div className="flex flex-wrap gap-2">
-              {Array.isArray(roadmap.stack)
-                ? roadmap.stack.map((tech, index) => (
-                    <span
-                      key={index}
-                      className={`bg-gray-100 px-2 py-1 rounded text-sm`}
-                    >
-                      {tech}
-                    </span>
-                  ))
-                : null}</div>
+                {Array.isArray(roadmap.stack)
+                  ? roadmap.stack.map((tech, index) => (
+                      <span
+                        key={index}
+                        className={`bg-gray-100 px-2 py-1 rounded text-sm`}
+                      >
+                        {tech}
+                      </span>
+                    ))
+                  : null}
+              </div>
             </div>
             <p className="text-gray-600 mb-4">{roadmap.overview.description}</p>
             <div className="grid md:grid-cols-2 gap-4">
