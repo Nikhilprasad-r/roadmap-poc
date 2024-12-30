@@ -20,7 +20,7 @@ const openAiResponse = async (
       },
     ],
 
-    response_format: zodResponseFormat(schema, "event"),
+    response_format: zodResponseFormat(schema,"roadmap"),
   });
   return completion.choices[0].message.parsed;
 };
