@@ -21,7 +21,7 @@ const RoadmapGenerator = () => {
   const [roadmap, setRoadmap] = useState<CareerRoadmap | null>(null);
   const api = "api/generate-roadmap";
   interface RoadmapResponse {
-    data: CareerRoadmap;
+    data:{message: CareerRoadmap}
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -33,7 +33,8 @@ const RoadmapGenerator = () => {
         stack: stack,
       });
       if (resp?.data) {
-        setRoadmap(resp.data);
+        console.log(resp.data.message)
+        setRoadmap(resp.data.message);
       }
     } catch (err) {
       console.error(err);
@@ -99,7 +100,7 @@ const RoadmapGenerator = () => {
             <div className="flex items-center gap-2 mb-4">
               <Target className="text-blue-600" />
               <h2 className="text-2xl font-bold text-gray-800">
-                {roadmap.role} - {roadmap.stack.join(", ")}
+                {roadmap.role}-{roadmap.stack.join(", ")}
               </h2>
             </div>
             <p className="text-gray-600 mb-4">{roadmap.overview.description}</p>
