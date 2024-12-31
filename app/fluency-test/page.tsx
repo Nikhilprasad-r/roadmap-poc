@@ -1,13 +1,17 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { Mic, Square, AlertCircle, RefreshCcw } from "lucide-react";
-
+export interface WordWiseScoreType {
+  word: string;
+  score: number;
+}
 interface Results {
   score: {
     accuracyScore: number;
     fluencyScore: number;
     completenessScore: number;
     pronunciationScore: number;
+    wordWiseScore: WordWiseScoreType[];
   };
   transcript: string;
 }
@@ -53,7 +57,7 @@ const FluencyRecorder = () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm' 
+        mimeType: "audio/webm",
       });
       mediaRecorder.current = recorder;
       audioChunks.current = [];
@@ -231,11 +235,27 @@ const FluencyRecorder = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="font-semibold">Transcribed Text:</div>
-              <p className="p-3 bg-white rounded-md text-gray-700">
-                {results.transcript}
-              </p>
+            <div className="flex flex-wrap gap-2">
+              {results.score.wordWiseScore.map((item, index) => (
+                <span key={index} className="relative group">
+                  <span
+                    className={`text-lg cursor-pointer ${
+                      item.score < 40
+                        ? "text-red-500"
+                        : item.score < 75
+                        ? "text-orange-500"
+                        : "text-green-500"
+                    }`}
+                  >
+                    {item.word}
+                  </span>
+                  {/* Tooltip */}
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1">
+                    PronunciationScore: {item.score}
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
+                  </div>
+                </span>
+              ))}
             </div>
           </div>
         )}
