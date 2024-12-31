@@ -52,7 +52,9 @@ const FluencyRecorder = () => {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      const recorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm' 
+      });
       mediaRecorder.current = recorder;
       audioChunks.current = [];
 
@@ -61,7 +63,7 @@ const FluencyRecorder = () => {
       };
 
       recorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks.current, { type: "audio/wav" });
+        const audioBlob = new Blob(audioChunks.current, { type: "audio/webm" });
         await sendAudioToAPI(audioBlob);
       };
 
@@ -99,7 +101,7 @@ const FluencyRecorder = () => {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              audio: base64Audio,
+              webmAudio: base64Audio,
               language: "en",
             }),
           }
