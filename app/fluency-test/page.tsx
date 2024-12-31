@@ -61,7 +61,7 @@ const FluencyRecorder = () => {
       };
 
       recorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks.current, { type: "audio/mp3" });
+        const audioBlob = new Blob(audioChunks.current, { type: "audio/wav" });
         await sendAudioToAPI(audioBlob);
       };
 
