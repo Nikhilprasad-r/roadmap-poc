@@ -100,7 +100,7 @@ const FluencyRecorder = () => {
         }
 
         const response = await fetch(
-          " http://localhost:3001/dev/fluencyChecker",
+          `${process.env.NEXT_PUBLIC_BACKEND_URL_FLUENCY}/dev/fluencyChecker`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
