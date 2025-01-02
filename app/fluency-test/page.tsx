@@ -1,8 +1,40 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Mic, Square, AlertCircle, RefreshCcw } from "lucide-react";
+import { Mic, Square, RefreshCcw, AlertCircle, ArrowRight } from "lucide-react";
 import type { FFmpeg } from "@ffmpeg/ffmpeg";
+const AudioVisualizer = () => {
+  return (
+    <div className="flex items-center gap-1 h-4">
+      {[...Array(5)].map((_, i) => (
+        <div
+          key={i}
+          className="w-1 bg-white rounded-full animate-pulse"
+          style={{
+            height: `${Math.random() * 16 + 4}px`,
+            animationDelay: `${i * 0.15}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+};
 
+const MicButton = ({ isRecording, onClick, disabled }: any) => {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="group relative flex items-center justify-center w-12 h-12 rounded-full bg-indigo-600 hover:bg-indigo-700 transition-all duration-300 disabled:opacity-50"
+    >
+      {isRecording ? (
+        <AudioVisualizer />
+      ) : (
+        <Mic className="w-5 h-5 text-white transition-transform group-hover:scale-110" />
+      )}
+      <div className="absolute inset-0 bg-white/20 rounded-full scale-0 group-hover:scale-100 transition-transform duration-200" />
+    </button>
+  );
+};
 export interface WordWiseScoreType {
   word: string;
   score: number;
@@ -213,6 +245,11 @@ const FluencyRecorder = () => {
 
         if (!response.ok) {
           const errorData = await response.json();
+          setError(
+            errorData?.error
+              ? errorData?.error
+              : "Failed to analyze pronunciation"
+          );
           throw new Error(
             errorData.message || "Failed to analyze pronunciation"
           );
@@ -220,12 +257,12 @@ const FluencyRecorder = () => {
 
         const data = (await response.json()) as Results;
         setResults(data);
+        setLoading(false);
       };
-    } catch (err) {
+    } catch (err: any) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to analyze pronunciation";
-      setError(errorMessage);
-    } finally {
+      setError(err?.error ? err?.error : errorMessage);
       setLoading(false);
     }
   };
@@ -237,128 +274,141 @@ const FluencyRecorder = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6">
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold">Pronunciation Checker</h2>
+    <div className="min-h-dvh bg-fixed bg-gradient-to-br from-neutral-900 to-neutral-800 py-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center  gap-y-4 min-w-full">
+      <div className="max-w-2xl mx-auto w-full">
+        <div className="bg-white/5 backdrop-blur-lg rounded-2xl shadow-xl p-8 space-y-8 border border-white/10">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-white mb-2">
+              Pronunciation Checker
+            </h1>
+            <p className="text-gray-400">
+              Analyze and improve your pronunciation
+            </p>
+          </div>
 
-        <div className="space-y-4">
-          <div className="flex gap-4 items-center">
-            {!isRecording ? (
-              <button
-                onClick={startRecording}
-                disabled={loading}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-              >
-                <Mic className="w-4 h-4" />
-                Start Recording
-              </button>
-            ) : (
-              <button
-                onClick={stopRecording}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-              >
-                <Square className="w-4 h-4" />
-                Stop Recording
-              </button>
-            )}
+          <div className="flex flex-col gap-4 items-center space-y-6">
+            <div className="flex flex-col gap-4 items-center justify-center">
+              {!isRecording ? (
+                <div className="flex flex-col items-center gap-2">
+                  <MicButton
+                    isRecording={false}
+                    onClick={startRecording}
+                    disabled={loading}
+                  />
+                  <span className="text-sm text-gray-400">Start Recording</span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  <button
+                    onClick={stopRecording}
+                    className="flex items-center justify-center w-12 h-12 rounded-full bg-red-600 hover:bg-red-700 transition-all duration-300"
+                  >
+                    <Square className="w-5 h-5 text-white" />
+                  </button>
+                  <span className="text-sm text-gray-400">Stop Recording</span>
+                </div>
+              )}
 
-            {(results || error) && (
-              <button
-                onClick={resetAll}
-                className="flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-gray-100"
-              >
-                <RefreshCcw className="w-4 h-4" />
-                Reset
-              </button>
+              {(results || error) && (
+                <button
+                  onClick={resetAll}
+                  className="flex items-center gap-2 px-4 py-3 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg border border-white/20 transition duration-200"
+                >
+                  <RefreshCcw className="w-4 h-4" />
+                  Reset
+                </button>
+              )}
+            </div>
+
+            {isRecording && (
+              <div className="flex items-center justify-center gap-2 text-white">
+                <div className="w-3 h-3 rounded-full bg-red-600 animate-pulse"></div>
+                <span className="text-sm font-medium">
+                  Recording: {formatTime(recordingTime)}
+                </span>
+              </div>
             )}
           </div>
 
-          {isRecording && (
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-600 animate-pulse"></div>
-              <span className="text-sm font-medium">
-                Recording: {formatTime(recordingTime)}
-              </span>
+          {!results ||
+            (loading && (
+              <div className="text-center py-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent mx-auto"></div>
+                <p className="mt-2 text-sm text-gray-400">
+                  Analyzing pronunciation...
+                </p>
+              </div>
+            ))}
+
+          {error && (
+            <div className="flex items-center gap-2 p-4 text-red-400 bg-red-900/50 rounded-lg border border-red-700">
+              <AlertCircle className="w-4 h-4" />
+              <p>{error}</p>
+            </div>
+          )}
+
+          {results && (
+            <div className="space-y-6 p-6 rounded-lg bg-white/10 border border-white/20">
+              <h3 className="font-semibold text-white">Results</h3>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+                  <div className="text-sm text-gray-400">Accuracy Score</div>
+                  <div className="text-2xl font-bold text-white">
+                    {results.score.accuracyScore}%
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+                  <div className="text-sm text-gray-400">Fluency Score</div>
+                  <div className="text-2xl font-bold text-white">
+                    {results.score.fluencyScore}%
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+                  <div className="text-sm text-gray-400">
+                    Completeness Score
+                  </div>
+                  <div className="text-2xl font-bold text-white">
+                    {results.score.completenessScore}%
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+                  <div className="text-sm text-gray-400">
+                    Overall Pronunciation
+                  </div>
+                  <div className="text-2xl font-bold text-white">
+                    {results.score.pronunciationScore}%
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {results.score.wordWiseScore.map((item, index) => (
+                  <span key={index} className="relative group">
+                    <span
+                      className={`text-lg cursor-pointer ${
+                        item.score < 40
+                          ? "text-red-400"
+                          : item.score < 75
+                          ? "text-orange-400"
+                          : "text-green-400"
+                      }`}
+                    >
+                      {item.word}
+                    </span>
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1">
+                      PronunciationScore: {item.score}
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
+                    </div>
+                  </span>
+                ))}
+              </div>
             </div>
           )}
         </div>
-
-        {loading && (
-          <div className="text-center py-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2 text-sm text-gray-600">
-              Analyzing pronunciation...
-            </p>
-          </div>
-        )}
-
-        {error && (
-          <div className="flex items-center gap-2 p-4 text-red-800 bg-red-100 rounded-md">
-            <AlertCircle className="w-4 h-4" />
-            <p>{error}</p>
-          </div>
-        )}
-
-        {results && (
-          <div className="space-y-4 p-4 border rounded-md bg-gray-50">
-            <h3 className="font-semibold">Results</h3>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 bg-white rounded-md shadow-sm">
-                <div className="text-sm text-gray-600">Accuracy Score</div>
-                <div className="text-2xl font-bold">
-                  {results.score.accuracyScore}%
-                </div>
-              </div>
-
-              <div className="p-3 bg-white rounded-md shadow-sm">
-                <div className="text-sm text-gray-600">Fluency Score</div>
-                <div className="text-2xl font-bold">
-                  {results.score.fluencyScore}%
-                </div>
-              </div>
-
-              <div className="p-3 bg-white rounded-md shadow-sm">
-                <div className="text-sm text-gray-600">Completeness Score</div>
-                <div className="text-2xl font-bold">
-                  {results.score.completenessScore}%
-                </div>
-              </div>
-
-              <div className="p-3 bg-white rounded-md shadow-sm">
-                <div className="text-sm text-gray-600">
-                  Overall Pronunciation
-                </div>
-                <div className="text-2xl font-bold">
-                  {results.score.pronunciationScore}%
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {results.score.wordWiseScore.map((item, index) => (
-                <span key={index} className="relative group">
-                  <span
-                    className={`text-lg cursor-pointer ${
-                      item.score < 40
-                        ? "text-red-500"
-                        : item.score < 75
-                        ? "text-orange-500"
-                        : "text-green-500"
-                    }`}
-                  >
-                    {item.word}
-                  </span>
-                  {/* Tooltip */}
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1">
-                    PronunciationScore: {item.score}
-                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
-                  </div>
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
