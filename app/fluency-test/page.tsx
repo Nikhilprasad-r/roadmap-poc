@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Mic, Square, RefreshCcw, AlertCircle, ArrowRight } from "lucide-react";
+import { Mic, Square, RefreshCcw, AlertCircle } from "lucide-react";
 import type { FFmpeg } from "@ffmpeg/ffmpeg";
 const AudioVisualizer = () => {
   return (
@@ -19,7 +19,7 @@ const AudioVisualizer = () => {
   );
 };
 
-const MicButton = ({ isRecording, onClick, disabled }: any) => {
+const MicButton = ({ isRecording, onClick, disabled }: { isRecording: boolean; onClick: () => void; disabled: boolean }) => {
   return (
     <button
       onClick={onClick}
@@ -259,10 +259,10 @@ const FluencyRecorder = () => {
         setResults(data);
         setLoading(false);
       };
-    } catch (err: any) {
+    } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to analyze pronunciation";
-      setError(err?.error ? err?.error : errorMessage);
+      setError( errorMessage);
       setLoading(false);
     }
   };
