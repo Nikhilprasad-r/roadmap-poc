@@ -1,10 +1,14 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { Mic, Square, AlertCircle, RefreshCcw } from "lucide-react";
+import { FFmpeg } from "@ffmpeg/ffmpeg";
+import { fetchFile, toBlobURL } from "@ffmpeg/util";
+
 export interface WordWiseScoreType {
   word: string;
   score: number;
 }
+
 interface Results {
   score: {
     accuracyScore: number;
@@ -25,6 +29,34 @@ const FluencyRecorder = () => {
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const ffmpegRef = useRef(new FFmpeg());
+  const [ffmpegLoaded, setFFmpegLoaded] = useState(false);
+
+  const loadFFMPEG = async () => {
+    try {
+      const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
+      const ffmpeg = ffmpegRef.current;
+      
+      ffmpeg.on("log", ({ message }) => {
+        console.info(message);
+      });
+
+      await ffmpeg.load({
+        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
+        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
+      });
+      
+      setFFmpegLoaded(true);
+      console.log("FFMPEG Loaded");
+    } catch (error) {
+      console.error("Error loading FFmpeg:", error);
+      setError("Failed to load audio processing capabilities");
+    }
+  };
+
+  useEffect(() => {
+    loadFFMPEG();
+  }, []);
 
   useEffect(() => {
     if (isRecording) {
@@ -54,6 +86,11 @@ const FluencyRecorder = () => {
   };
 
   const startRecording = async () => {
+    if (!ffmpegLoaded) {
+      setError("Audio processing is not ready yet. Please try again.");
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream, {
@@ -87,11 +124,46 @@ const FluencyRecorder = () => {
     }
   };
 
+  const convertToWav = async (audioBlob: Blob): Promise<Blob> => {
+    const ffmpeg = ffmpegRef.current;
+    
+    // Write the input webm file to FFmpeg's virtual filesystem
+    const inputFileName = 'input.webm';
+    const outputFileName = 'output.wav';
+    const inputData = await fetchFile(audioBlob);
+    await ffmpeg.writeFile(inputFileName, inputData);
+    
+    // Convert webm to wav with specific parameters
+    await ffmpeg.exec([
+      '-i', inputFileName,
+      '-ac', '1',              // Mono audio channel
+      '-ar', '16000',          // 16 kHz sample rate
+      '-c:a', 'pcm_s16le',     // PCM 16-bit signed little-endian
+      '-f', 'wav',             // WAV format
+      outputFileName
+    ]);
+    
+    // Read the output file
+    const outputData = await ffmpeg.readFile(outputFileName);
+    
+    // Clean up files
+    await ffmpeg.deleteFile(inputFileName);
+    await ffmpeg.deleteFile(outputFileName);
+    
+    // Convert the output data to a Blob
+    return new Blob([outputData], { type: 'audio/wav' });
+  };
+
   const sendAudioToAPI = async (audioBlob: Blob) => {
     setLoading(true);
     try {
+      // Convert webm to wav using FFmpeg
+      const wavBlob = await convertToWav(audioBlob);
+      
+      // Convert wav blob to base64
       const reader = new FileReader();
-      reader.readAsDataURL(audioBlob);
+      reader.readAsDataURL(wavBlob);
+      
       reader.onloadend = async () => {
         const base64Audio = (reader.result as string)?.split(",")[1];
 
@@ -105,7 +177,7 @@ const FluencyRecorder = () => {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              webmAudio: base64Audio,
+              wavAudio: base64Audio, // Changed from webmAudio to wavAudio
               language: "en",
             }),
           }
@@ -113,9 +185,7 @@ const FluencyRecorder = () => {
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(
-            errorData.message || "Failed to analyze pronunciation"
-          );
+          throw new Error(errorData.message || "Failed to analyze pronunciation");
         }
 
         const data = (await response.json()) as Results;
