@@ -112,6 +112,7 @@ const FluencyRecorder = () => {
       setIsRecording(true);
       setError("");
     } catch (err) {
+      console.error(err);
       setError("Please allow microphone access to use this feature.");
     }
   };
