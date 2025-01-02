@@ -1,0 +1,53 @@
+import ffmpeg from "fluent-ffmpeg";
+// import fs from "fs";
+import { Readable, Writable } from "stream";
+// import path from "path";
+
+ffmpeg.setFfmpegPath("/usr/local/Cellar/ffmpeg/7.1_4/bin/ffmpeg");
+// Set the path to the ffmpeg binary
+// ffmpeg.setFfmpegPath(path.join(__dirname, "bin", "ffmpeg"));
+
+// Function to convert WebM buffer to WAV buffer and then base64 encode it
+export const convertWebMToWavBase64 = (webmBuffer: Buffer): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    // Write the WebM buffer to a file for debugging purposes
+    // fs.writeFileSync("input.webm", new Uint8Array(webmBuffer));
+
+    const wavBuffer: Buffer[] = []; // To collect WAV output data as Buffers
+
+    // Create a readable stream from the Buffer
+    const inputStream = Readable.from(webmBuffer);
+    const writableStream = new Writable({
+      write(chunk: any, encoding: BufferEncoding, callback: (error?: Error | null) => void) {
+        try {
+          wavBuffer.push(chunk); // Directly push the chunk (Buffer) to the array
+          callback(); // Signal that the chunk has been processed
+        } catch (error) {
+          callback(error); // If there's an error, pass it to the callback
+        }
+      },
+      final(callback: (error?: Error | null) => void) {
+        callback(); // Finalize the stream processing
+      }
+    });
+    const ffmpegProcess = ffmpeg(inputStream) // Use the WebM buffer as input
+      .audioChannels(1) // Use mono audio channel
+      .audioFrequency(16000) // Set sample rate to 16 kHz (Azure Speech requirement)
+      .audioCodec("pcm_s16le") // Use PCM 16-bit signed little-endian encoding
+      .format("wav") // Output format
+      .on('error', (err) => {
+        reject(`Error converting WebM to WAV: ${err.message}`);
+      })
+      .on('end', () => {
+        const audioBuffer = Buffer.concat(wavBuffer as unknown as Uint8Array[]);
+        const audioBase64 = audioBuffer.toString("base64"); // Convert the buffer to base64
+
+        // fs.writeFileSync("output.wav", new Uint8Array(audioBuffer));
+        resolve(audioBase64);
+      });
+
+    // Pipe the output of ffmpeg to the writable stream
+    ffmpegProcess.pipe(writableStream);
+  
+  });
+};
